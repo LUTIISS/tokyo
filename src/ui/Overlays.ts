@@ -53,9 +53,9 @@ export class Overlays {
     el.className = 'overlay';
     el.innerHTML = `
       <div class="intro">
-        <div class="intro-kicker">東京 · ナイトドリフト</div>
-        <div class="intro-title">TOKYO NIGHT DRIFT</div>
-        <div class="intro-sub">Toyota Mark II · неон · сакура · один босс</div>
+        <div class="intro-kicker">誕生日おめでとう · 東京</div>
+        <div class="intro-title">С ДНЁМ РОЖДЕНИЯ,<br />АНДРЮХА!</div>
+        <div class="intro-sub">Ночной Токио · Toyota Mark II · неон · дрифт</div>
         <div class="intro-cta loading">СТРОИМ ТОКИО…</div>
         <div class="intro-controls">
           <div><span>Ходить / ехать</span><span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span></div>
@@ -68,7 +68,7 @@ export class Overlays {
           <div><span>Следующий трек / звук</span><span><kbd>N</kbd> <kbd>M</kbd></span></div>
           <div><span>Пауза / помощь</span><span><kbd>Esc</kbd> <kbd>H</kbd></span></div>
         </div>
-        <div class="intro-note">Музыка и мемы: положи файлы в public/audio и public/media — подробности в README.</div>
+        <div class="intro-note">Собрано специально для Андрюхи · 誕生日おめでとう</div>
       </div>`;
     this.root.appendChild(el);
     this.introEl = el;

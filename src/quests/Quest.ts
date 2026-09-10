@@ -27,15 +27,15 @@ export interface Quest {
  */
 export class PlaceholderQuest implements Quest {
   readonly id = 'overlook-placeholder';
-  readonly title = 'Испытание на смотровой';
-  readonly kicker = '展望台 · КВЕСТ';
+  readonly title = 'Поздравление на смотровой';
+  readonly kicker = '展望台 · ПОДАРОК';
   readonly reward = ECONOMY.questReward;
   done = false;
 
   get description(): string {
     return `
-      <p>Это место для настоящего квеста — он будет здесь позже.</p>
-      <p>Пока что: ты доехал до смотровой площадки над ночным Токио, а значит — заслужил награду.</p>
+      <p>Андрюха, с днём рождения! Весь этот город собрали ради тебя.</p>
+      <p>Ты доехал до смотровой над ночным Токио — держи подарок на тюнинг.</p>
       <span class="reward">+¥${this.reward.toLocaleString('ru-RU')}</span>
     `;
   }
@@ -49,6 +49,6 @@ export class PlaceholderQuest implements Quest {
   }
 
   progressText(): string {
-    return this.done ? 'Выполнен' : 'Доехать до смотровой площадки';
+    return this.done ? 'Подарок получен' : 'Доехать до смотровой площадки';
   }
 }

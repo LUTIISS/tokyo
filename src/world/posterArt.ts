@@ -18,12 +18,12 @@ export interface PosterSpec {
 }
 
 export const POSTERS: PosterSpec[] = [
-  { top: ['пусть', 'deep dark', 'fantasies'], bottom: ['будут', 'so stunning'], figure: 'runner' },
-  { top: ['Протягиваю', 'тебе'], bottom: ['много много', 'здоровья'], figure: 'hand' },
-  { top: ['Летящий в даль', 'mAsstep'], bottom: ['поздравляет', 'тебя'], figure: 'sitting' },
-  { top: ['Это', 'солнце'], bottom: ['будет тебя', 'по утрам'], figure: 'sun' },
-  { top: ['Двойной', 'respect!'], bottom: ['Поздравляем тебя,', 'legendary bro!'], figure: 'duo' },
-  { top: ['Поздравляем,', 'bro!'], bottom: ['Пусть каждый day', 'будет', 'legendary!'], figure: 'rainbow' },
+  { top: ['пусть', 'deep dark', 'fantasies'], bottom: ['Андрюхи', 'so stunning'], figure: 'runner' },
+  { top: ['Протягиваю', 'Андрюхе'], bottom: ['много много', 'здоровья'], figure: 'hand' },
+  { top: ['Летящий в даль', 'mAsstep'], bottom: ['поздравляет', 'Андрюху'], figure: 'sitting' },
+  { top: ['Это солнце', 'встаёт'], bottom: ['ради Андрюхи', 'по утрам'], figure: 'sun' },
+  { top: ['Двойной', 'respect!'], bottom: ['С днём рождения,', 'Андрюха!'], figure: 'duo' },
+  { top: ['Поздравляем', 'Андрюху!'], bottom: ['Пусть каждый day', 'будет', 'legendary!'], figure: 'rainbow' },
 ];
 
 const W = 512;

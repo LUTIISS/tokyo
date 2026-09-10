@@ -78,7 +78,6 @@ export class Game {
   private lastSector: Sector | null = null;
   private dayTarget = 0;
   private gateWarnAt = -10;
-  private lastClank = 0;
   private prevImpact = 0;
   private focus = new THREE.Vector3();
   private tmpV = new THREE.Vector3();
@@ -124,7 +123,6 @@ export class Game {
     this.garage = new GarageMenu(this.ui, this.state, {
       onChange: () => this.car.applyUpgrades(this.state.upgrades),
       onClose: () => this.closeGarage(),
-      sfx: (n) => this.audio.sfx(n),
     });
 
     // ── Мир ──
@@ -202,7 +200,7 @@ export class Game {
     this.hud.setVisible(true);
     this.setMode('walk');
     this.cameraRig.setMode('walk');
-    this.hud.toast('Подойди к машине и нажми <kbd>E</kbd> · <kbd>Tab</kbd> — карта · <kbd>H</kbd> — управление', 'info', 5000);
+    this.hud.toast('Андрюха, с днём рождения! Садись в тачку: <kbd>E</kbd> · <kbd>Tab</kbd> — карта · <kbd>H</kbd> — управление', 'good', 6000);
     const loc = this.world.locationAt(this.player.x, this.player.z);
     this.lastSector = loc.key;
     this.hud.showLocation(loc.jp, loc.ru);
@@ -231,11 +229,11 @@ export class Game {
     const d = this.state.data;
     let line: string;
     let done = false;
-    if (!d.questDone) line = 'Квест: доехать до <b>смотровой площадки</b> (розовый маяк за перевалом)';
+    if (!d.questDone) line = 'Подарок ждёт на <b>смотровой площадке</b> (розовый маяк за перевалом)';
     else if (!d.upgrades.bigUpgrade) line = `Мастерская: купить <b>большой апгрейд</b> за ${formatYen(ECONOMY.bigUpgradeCost)}`;
     else if (!d.bossDefeated) line = 'Штурмовать <b>базу Ваисова</b> в порту';
     else {
-      line = 'Аниме-девочки свободны. Свободная езда.';
+      line = 'Весь Токио поздравляет Андрюху. Свободная езда.';
       done = true;
     }
     this.hud.setQuestLine(line, done);
@@ -366,20 +364,7 @@ export class Game {
       }
     }
 
-    // Звук
-    const engineOn = this.car.engineOn && (this.mode === 'drive' || this.mode === 'finale' || this.mode === 'bossfight');
-    this.audio.setEngine(ph.rpm, engineOn ? this.input.throttle : 0, this.car.engineOn);
-    const screech = engineOn ? Math.min(1, Math.max(Math.abs(ph.slip) / 0.45, this.input.handbrake && Math.abs(ph.speed) > 3 ? 0.7 : 0)) * Math.min(1, Math.abs(ph.speed) / 6) : 0;
-    this.audio.setScreech(screech);
-    this.audio.update(dt);
     this.hud.update(dt);
-
-    // Стук флюгегехаймена
-    const fl = this.car.fluegel;
-    if (fl.installed && fl.active && fl.stroke > 0.9 && this.time - this.lastClank > 0.1) {
-      this.lastClank = this.time;
-      this.audio.sfx('clank');
-    }
 
     // Локация
     if (this.mode === 'walk' || this.mode === 'drive' || this.mode === 'finale') {
@@ -402,7 +387,6 @@ export class Game {
     }
     if (this.input.justPressedRaw('Tab') && (this.mode === 'walk' || this.mode === 'drive' || this.mode === 'finale' || this.mode === 'bossfight')) {
       this.minimap.toggleBig();
-      this.audio.sfx('ui');
     }
     if (this.input.justPressed('KeyH')) this.hud.toggleHelp();
     if (this.input.justPressed('KeyN')) this.audio.next();
@@ -431,27 +415,23 @@ export class Game {
     this.setMode('entering');
     this.hud.setPrompt(null);
     this.car.openDoor();
-    this.audio.sfx('door');
     const door = this.car.doorPoint(new THREE.Vector3());
     // Стоим у двери лицом к машине (влево от двери — центр машины)
     const faceHeading = Math.atan2(-(this.car.position.x - door.x), -(this.car.position.z - door.z));
     this.player.walkTo(door, faceHeading, () => {
       this.after(0.25, () => {
         this.player.setSeated(true, this.car.model.seatAnchor);
-        this.audio.sfx('ui');
       });
       this.after(0.7, () => {
         this.car.closeDoor();
-        this.audio.sfx('doorClose');
       });
       this.after(1.2, () => {
         this.car.setEngine(true);
-        this.audio.sfx('engineStart');
         this.cameraRig.setMode('chase');
       });
       this.after(1.7, () => {
         this.setMode('drive');
-        this.hud.toast('Поехали. <kbd>Space</kbd> — ручник, дрифтуй.', 'info', 3500);
+        this.hud.toast('Поехали, именинник. <kbd>Space</kbd> — ручник, дрифтуй.', 'info', 3500);
       });
     });
   }
@@ -461,7 +441,6 @@ export class Game {
     this.hud.setPrompt(null);
     this.car.setEngine(false);
     this.car.openDoor();
-    this.audio.sfx('door');
     this.after(0.55, () => {
       const door = this.car.doorPoint(new THREE.Vector3());
       this.player.setSeated(false);
@@ -472,7 +451,6 @@ export class Game {
     });
     this.after(1.1, () => {
       this.car.closeDoor();
-      this.audio.sfx('doorClose');
       this.setMode('walk');
     });
   }
@@ -497,11 +475,9 @@ export class Game {
 
     // Удары
     if (ph.impact > 0.45 && this.prevImpact <= 0.45) {
-      this.audio.sfx('hit');
       this.cameraRig.shake(ph.impact);
     }
     this.prevImpact = ph.impact;
-    if (this.car.params.nitro && ph.nitroActive && this.input.justPressed('ShiftLeft')) this.audio.sfx('nitro');
 
     // HUD
     this.hud.setSpeed(ph.speedKmh, ph.gear, ph.rpm, ph.speed < -0.5);
@@ -549,14 +525,12 @@ export class Game {
     if (score < 40) return;
     this.state.recordDrift(score);
     this.hud.toast(`ДРИФТ +${score.toLocaleString('ru-RU')}`, 'good', 1500);
-    if (score > 400) this.audio.sfx('drift');
   }
 
   // ── Квест ──
   private openQuest(): void {
     this.setMode('quest');
     this.hud.setPrompt(null);
-    this.audio.sfx('ui');
     const q = this.quest;
     this.overlays.showDialog({
       kicker: q.kicker,
@@ -570,10 +544,9 @@ export class Game {
           onClick: () => {
             q.start();
             this.state.completeQuest(q.reward);
-            this.audio.sfx('coin');
             this.overlays.closeDialog();
             this.setMode('drive');
-            this.hud.toast(`Квест выполнен! <b>+${formatYen(q.reward)}</b>. Теперь — в мастерскую.`, 'good', 4500);
+            this.hud.toast(`Подарок принят! <b>+${formatYen(q.reward)}</b>. Теперь — в мастерскую.`, 'good', 4500);
           },
         },
         {
@@ -594,7 +567,6 @@ export class Game {
     this.hud.setPrompt(null);
     this.car.setEngine(false);
     this.cameraRig.setMode('showroom');
-    this.audio.sfx('confirm');
     this.garage.open();
   }
 
@@ -603,7 +575,6 @@ export class Game {
     this.car.setEngine(true);
     this.cameraRig.setMode('chase');
     this.setMode('drive');
-    this.audio.sfx('engineStart');
   }
 
   // ── Босс ──
@@ -619,10 +590,9 @@ export class Game {
     const from = carPos.clone().addScaledVector(f.along, 9).addScaledVector(f.inward, -5).addScaledVector(up, 2.5);
     const to = f.gate.clone().addScaledVector(f.inward, -9).addScaledVector(f.along, 4).addScaledVector(up, 7);
     this.cameraRig.cinematic(from, to, carPos.clone().addScaledVector(up, 1), f.gate, 4);
-    this.overlays.subtitle('Кто посмел приехать на моём районе с такой подсветкой?!', 'ВАИСОВ');
+    this.overlays.subtitle('Кто посмел праздновать день рождения на моём районе?!', 'ВАИСОВ');
 
     this.after(2.4, () => {
-      this.audio.sfx('gate');
       this.world.zones.openGate();
       this.cameraRig.shake(1);
       this.overlays.subtitle('Флюгегехаймен сносит ворота.', 'ФЛЮГЕГЕХАЙМЕН');
@@ -680,7 +650,6 @@ export class Game {
       // Кончик должен смотреть примерно в него
       const aim = (ph.forwardX * dx + ph.forwardZ * dz) / (dist || 1);
       if (aim > 0.45 && this.boss.takeHit(ph.x, ph.z, 1 + Math.min(1, ph.speedKmh / 90))) {
-        this.audio.sfx('hit');
         this.cameraRig.shake(0.9);
         this.hud.setBoss(true, this.boss.hp, this.boss.maxHp, this.boss.hp > 0 ? `Осталось ударов: <b>${this.boss.hp}</b>` : 'Ваисов повержен');
         const tip = fl.tipWorld(this.tmpV);
@@ -705,14 +674,12 @@ export class Game {
         ph.vz -= nz * vn * 1.4;
         if (vn > 6) {
           ph.impact = Math.min(1, vn / 14);
-          this.audio.sfx('hit');
         }
       }
     }
   }
 
   private onBossDefeated(): void {
-    this.audio.sfx('fanfare');
     this.hud.setBoss(true, 0, this.boss.maxHp, 'Ваисов повержен');
     this.setMode('boss');
     this.overlays.cutsceneBars(true);
@@ -721,12 +688,11 @@ export class Game {
     const bossPos = new THREE.Vector3(this.boss.x, this.boss.y + 1, this.boss.z);
     const cam = bossPos.clone().addScaledVector(f.inward, -13).addScaledVector(f.along, 9).addScaledVector(up, 8);
     this.cameraRig.cinematic(this.cameraRig.camera.position.clone(), cam, bossPos, bossPos, 2.6);
-    this.overlays.subtitle('Всё, всё! Забирай их, только убери эту штуку!', 'ВАИСОВ');
+    this.overlays.subtitle('Всё, всё! Поздравляю, Андрюха, только убери эту штуку!', 'ВАИСОВ');
 
     this.after(3.2, () => {
       this.world.zones.captureBase();
-      this.audio.sfx('gate');
-      this.overlays.subtitle('Клетка открыта. Аниме-девочки свободны!', 'ПОБЕДА');
+      this.overlays.subtitle('Клетка открыта. Аниме-девочки поздравляют Андрюху!', 'ПОБЕДА');
       const overCage = f.cage.clone().addScaledVector(f.inward, -12).addScaledVector(f.along, 6).addScaledVector(up, 6);
       this.cameraRig.cinematic(cam, overCage, bossPos, f.cage, 3.4);
     });
@@ -743,7 +709,7 @@ export class Game {
     this.dayTarget = 1;
     this.world.sakura.setIntensity(1);
     this.audio.playFinale();
-    this.overlays.showFinale('桜', 'Ночь кончилась. Сакура цветёт.');
+    this.overlays.showFinale('С ДНЁМ РОЖДЕНИЯ, АНДРЮХА!', 'Ночь кончилась · сакура цветёт · 誕生日おめでとう');
     this.setMode('finale');
     // Камера продолжает кружить над двором, затем возвращается к машине
     const f = this.world.zones.bossFocus();
@@ -754,7 +720,7 @@ export class Game {
       this.overlays.cutsceneBars(false);
       this.cameraRig.setMode('chase');
       this.setMode('drive');
-      this.hud.toast('Мир твой. Катайся сколько хочешь — база открыта.', 'good', 5000);
+      this.hud.toast('Весь Токио твой, Андрюха. Катайся сколько хочешь.', 'good', 5000);
     });
   }
 
@@ -762,10 +728,9 @@ export class Game {
   private pause(): void {
     this.modeBeforePause = this.mode;
     this.setMode('paused');
-    this.audio.setEngine(0, 0, false);
     this.overlays.showDialog({
-      kicker: '一時停止',
-      title: 'Пауза',
+      kicker: '誕生日おめでとう',
+      title: 'Пауза · с днём рождения, Андрюха',
       body: `
         <p>Иен: <b>${formatYen(this.state.yen)}</b> · Лучший дрифт: <b>${this.state.data.driftBest.toLocaleString('ru-RU')}</b></p>
         <p style="color:var(--muted)">Музыка: положи mp3 в <code>public/audio/tracks/</code>, мемы — в <code>public/media/billboards/</code>.</p>`,

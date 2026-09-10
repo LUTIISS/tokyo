@@ -203,7 +203,7 @@ export class Zones {
       new THREE.MeshStandardMaterial({
         color: 0x000000,
         emissive: 0xffffff,
-        emissiveMap: makeLabelTexture(['展望台 · СМОТРОВАЯ'], { color: '#22e5ff', width: 1400 }),
+        emissiveMap: makeLabelTexture(['С ДР, АНДРЮХА!'], { color: '#22e5ff', width: 1400 }),
         emissiveIntensity: 1.5,
         side: THREE.DoubleSide,
       }),
@@ -299,7 +299,7 @@ export class Zones {
       new THREE.MeshStandardMaterial({
         color: 0x000000,
         emissive: 0xffffff,
-        emissiveMap: makeLabelTexture(['ガレージ · ТЮНИНГ'], { color: '#ffe45c', width: 1600 }),
+        emissiveMap: makeLabelTexture(['ТЮНИНГ ДЛЯ АНДРЮХИ'], { color: '#ffe45c', width: 1600 }),
         emissiveIntensity: 1.6,
       }),
     );

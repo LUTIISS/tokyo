@@ -1,6 +1,5 @@
 import { ECONOMY, NEON_COLORS } from '@/config';
 import { formatYen, type GameState, type Upgrades } from '@/core/GameState';
-import type { SfxName } from '@/audio/AudioManager';
 
 type CatId = 'engine' | 'turbo' | 'tires' | 'aero' | 'neon' | 'big';
 
@@ -102,7 +101,6 @@ const CATS: Cat[] = [
 export interface GarageCallbacks {
   onChange(): void;
   onClose(): void;
-  sfx(name: SfxName): void;
 }
 
 /**
@@ -250,7 +248,6 @@ export class GarageMenu {
     this.el.querySelectorAll<HTMLElement>('.cat').forEach((c) => {
       c.addEventListener('click', () => {
         this.active = c.dataset.catId as CatId;
-        this.cb.sfx('ui');
         this.render();
       });
     });
@@ -261,7 +258,6 @@ export class GarageMenu {
         const first = c.options[0].value;
         const value: number | boolean = typeof first === 'boolean' ? raw === 'true' : Number(raw);
         this.state.setUpgrade(c.key as keyof Upgrades, value as never);
-        this.cb.sfx('confirm');
         this.cb.onChange();
         this.render();
       });
@@ -270,11 +266,9 @@ export class GarageMenu {
     buy?.addEventListener('click', () => {
       if (this.state.spend(ECONOMY.bigUpgradeCost)) {
         this.state.setUpgrade('bigUpgrade', true);
-        this.cb.sfx('fanfare');
         this.cb.onChange();
         this.render();
       } else {
-        this.cb.sfx('deny');
       }
     });
   }

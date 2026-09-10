@@ -40,7 +40,8 @@ function prettyName(file) {
   let name = basename(file, extname(file));
   name = name.replace(/^\s*\d{1,3}\s*[-_.)]?\s*/, '');
   name = name.replace(/[_]+/g, ' ');
-  name = name.replace(/\s*-\s*/g, ' — ');
+  // Только дефис, окружённый пробелами: «Круг - Жиган-лимон» → «Круг — Жиган-лимон».
+  name = name.replace(/\s+-\s+/g, ' — ');
   return name.trim() || basename(file, extname(file));
 }
 

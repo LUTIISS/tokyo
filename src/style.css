@@ -1207,12 +1207,15 @@ kbd {
 .finale {
   text-align: center;
   padding: 24px;
+  max-width: min(1100px, 92vw);
 }
 .finale-title {
   font-family: var(--font-jp);
   font-weight: 900;
-  font-size: clamp(36px, 7vw, 76px);
-  letter-spacing: 0.3em;
+  font-size: clamp(30px, 6vw, 68px);
+  line-height: 1.15;
+  letter-spacing: 0.1em;
+  text-wrap: balance;
   color: #fff;
   text-shadow:
     0 0 20px rgba(255, 150, 200, 0.9),

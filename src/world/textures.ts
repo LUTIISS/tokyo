@@ -164,29 +164,39 @@ export function makeBillboardPlaceholder(n: number): THREE.CanvasTexture {
   ctx.shadowBlur = 24;
   ctx.strokeRect(18, 18, w - 36, h - 36);
 
+  // Пока в public/media/billboards/ нет своих картинок, экраны поздравляют именинника.
+  const GREETINGS = [
+    'ТЫ ЛЕГЕНДА, БРАТ',
+    'ГОРОД ГУЛЯЕТ ЗА ТЕБЯ',
+    'ЖЕЛАЕМ RIGHT VERSION',
+    'ДРИФТУЙ И НЕ СТАРЕЙ',
+  ];
+
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillStyle = a;
-  ctx.shadowColor = a;
-  ctx.shadowBlur = 30;
-  ctx.font = `900 150px "Orbitron", "Inter", sans-serif`;
-  ctx.fillText(String(n + 1).padStart(2, '0'), w / 2, h / 2 - 40);
-
-  ctx.fillStyle = '#ffffff';
-  ctx.shadowColor = '#ffffff';
-  ctx.shadowBlur = 12;
-  ctx.font = `700 40px "Inter", "Noto Sans JP", sans-serif`;
-  ctx.fillText(`СТЕНД #${n + 1}`, w / 2, h / 2 + 70);
-  ctx.font = `400 26px "Inter", "Noto Sans JP", sans-serif`;
-  ctx.fillStyle = 'rgba(255,255,255,0.7)';
-  ctx.shadowBlur = 0;
-  ctx.fillText('сюда мем или ролик · public/media/billboards.json', w / 2, h / 2 + 118);
 
   ctx.font = `900 34px "Noto Sans JP", sans-serif`;
   ctx.fillStyle = b;
   ctx.shadowColor = b;
   ctx.shadowBlur = 16;
-  ctx.fillText('ミーム · MEME · ミーム', w / 2, 62);
+  ctx.fillText('誕生日おめでとう', w / 2, 62);
+
+  ctx.fillStyle = a;
+  ctx.shadowColor = a;
+  ctx.shadowBlur = 30;
+  ctx.font = `900 96px "Orbitron", "Inter", sans-serif`;
+  ctx.fillText('АНДРЮХА', w / 2, h / 2 - 30);
+
+  ctx.fillStyle = '#ffffff';
+  ctx.shadowColor = '#ffffff';
+  ctx.shadowBlur = 12;
+  ctx.font = `800 52px "Inter", "Noto Sans JP", sans-serif`;
+  ctx.fillText('С ДНЁМ РОЖДЕНИЯ!', w / 2, h / 2 + 48);
+
+  ctx.font = `600 30px "Inter", "Noto Sans JP", sans-serif`;
+  ctx.fillStyle = 'rgba(255,255,255,0.75)';
+  ctx.shadowBlur = 0;
+  ctx.fillText(GREETINGS[n % GREETINGS.length], w / 2, h / 2 + 112);
 
   const tex = new THREE.CanvasTexture(c);
   tex.colorSpace = THREE.SRGBColorSpace;

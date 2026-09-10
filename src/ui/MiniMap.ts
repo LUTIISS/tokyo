@@ -72,7 +72,7 @@ export class MiniMap {
     plan: ZonePlan,
   ) {
     this.pois = [
-      { id: 'quest', x: plan.quest.x, z: plan.quest.z, s: plan.quest.sample.s, label: 'Смотровая · квест', jp: '展望台', color: '#ff2d95', glyph: '⛩' },
+      { id: 'quest', x: plan.quest.x, z: plan.quest.z, s: plan.quest.sample.s, label: 'Смотровая · подарок', jp: '展望台', color: '#ff2d95', glyph: '⛩' },
       { id: 'garage', x: plan.garage.x, z: plan.garage.z, s: plan.garage.sample.s, label: 'Мастерская', jp: 'ガレージ', color: '#ffe45c', glyph: '🔧' },
       { id: 'boss', x: plan.boss.x, z: plan.boss.z, s: plan.boss.sample.s, label: 'База Ваисова', jp: '拠点', color: '#ff4b4b', glyph: '💀' },
     ];
@@ -115,10 +115,10 @@ export class MiniMap {
     this.bigRoot.className = 'overlay bigmap hidden';
     this.bigRoot.innerHTML = `
       <div class="bigmap-panel">
-        <div class="bigmap-head"><div class="bigmap-title">東京 · КАРТА ТРАССЫ</div><div class="mm-head big"></div></div>
+        <div class="bigmap-head"><div class="bigmap-title">誕生日 · КАРТА ДЛЯ АНДРЮХИ</div><div class="mm-head big"></div></div>
         <canvas width="640" height="760"></canvas>
         <div class="bigmap-legend">
-          <span><i style="background:#ff2d95"></i> смотровая · квест</span>
+          <span><i style="background:#ff2d95"></i> смотровая · подарок</span>
           <span><i style="background:#ffe45c"></i> мастерская</span>
           <span><i style="background:#ff4b4b"></i> база Ваисова</span>
           <span><i style="background:#22e5ff"></i> ты</span>
@@ -185,7 +185,7 @@ export class MiniMap {
       this.bigHead.innerHTML = html;
     } else {
       this.distance = 0;
-      const html = `<span class="mm-glyph">🌸</span><span class="mm-name">Свободная езда</span>`;
+      const html = `<span class="mm-glyph">🌸</span><span class="mm-name">С днём рождения, Андрюха!</span>`;
       this.head.innerHTML = html;
       this.bigHead.innerHTML = html;
     }

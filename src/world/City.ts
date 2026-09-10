@@ -38,7 +38,16 @@ const NEON_WORDS = [
   '薬',
   '走り屋',
   'ネオン',
+  // Ради именинника весь квартал перевесил вывески.
+  '誕生日',
+  '祝',
+  'АНДРЮХА',
+  'С ДР!',
+  'ИМЕНИННИК',
 ];
+
+/** Кириллицу вертикально не читают — такие вывески вешаем горизонтально. */
+const CYRILLIC = /[А-Яа-яЁё]/;
 const NEON_COLORS = ['#ff2d95', '#22e5ff', '#ffe45c', '#9b5cff', '#ff7a1a', '#6dff3c', '#ff4b4b'];
 
 interface BuildingSpec {
@@ -304,7 +313,7 @@ export class City {
       const facing = Math.atan2(-smp.nx * side, -smp.nz * side);
       const word = NEON_WORDS[Math.floor(rnd() * NEON_WORDS.length)];
       const color = NEON_COLORS[Math.floor(rnd() * NEON_COLORS.length)];
-      const vertical = rnd() < 0.65;
+      const vertical = !CYRILLIC.test(word) && rnd() < 0.65;
       const entry = getEntry(word, color, vertical);
       const chars = Array.from(word).length;
       const sw = vertical ? 1.4 : Math.min(b.w - 1, chars * 1.2 + 0.6);
