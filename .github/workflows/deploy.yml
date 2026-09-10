@@ -53,15 +53,25 @@ jobs:
           REPO: ${{ github.event.repository.name }}
         run: |
           url="https://${OWNER,,}.github.io/${REPO}/"
-          for i in 1 2 3 4 5 6 7 8 9; do
+          # Ищем ровно тот файл сборки, который только что собрали, — иначе проверка
+          # пройдёт по старой закэшированной версии и ничего не докажет.
+          asset=$(grep -o "/${REPO}/assets/index-[A-Za-z0-9_-]*\.js" dist/index.html | head -1)
+          echo "Ждём на сайте: $asset"
+          for i in $(seq 1 12); do
             body=$(curl -s -H 'Cache-Control: no-cache' "$url" || true)
             code=$(curl -s -o /dev/null -w '%{http_code}' -H 'Cache-Control: no-cache' "$url" || echo 000)
-            title=$(printf '%s' "$body" | grep -o '<title>[^<]*</title>' | head -1)
-            echo "Попытка $i: $url → HTTP $code $title"
-            if [ "$code" = "200" ] && printf '%s' "$body" | grep -q "/${REPO}/assets/index-"; then
-              echo "Сайт отдаёт сборку игры."
+            echo "Попытка $i: HTTP $code $(printf '%s' "$body" | grep -o '<title>[^<]*</title>' | head -1)"
+            if [ "$code" = "200" ] && printf '%s' "$body" | grep -qF "$asset"; then
+              echo "Сайт отдаёт свежую сборку."
+              # Первый трек радио: имя с пробелами и кириллицей — проверяем, что он реально отдаётся.
+              track=$(node -e 'const t=require("./dist/audio/tracks.json").tracks[0]; if(t) process.stdout.write(encodeURI(t.src));')
+              if [ -n "$track" ]; then
+                tcode=$(curl -s -o /dev/null -w '%{http_code}' -r 0-1024 "https://${OWNER,,}.github.io${track/#\//\/${REPO}\/}" || echo 000)
+                echo "Первый трек радио → HTTP $tcode"
+                case "$tcode" in 200|206) ;; *) echo "::warning::Трек не отдаётся (HTTP $tcode) — проверь имя файла";; esac
+              fi
               exit 0
             fi
             sleep 20
           done
-          echo "::warning::По адресу пока не сборка игры. Проверь Settings → Pages: Source «Deploy from a branch», ветка gh-pages, папка / (root)."
+          echo "::warning::Свежая сборка ещё не поднялась. Проверь Settings → Pages: Source «Deploy from a branch», ветка gh-pages, папка / (root)."
