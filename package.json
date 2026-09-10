@@ -1,0 +1,24 @@
+{
+  "name": "tokyo-drift-mark2",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "description": "Ночной Токио, белая Toyota Mark II, неон и дрифт. Браузерная 3D-игра в духе Slow Roads.",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "vite build",
+    "preview": "vite preview --host",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "three": "^0.186.0"
+  },
+  "devDependencies": {
+    "@types/three": "^0.185.0",
+    "typescript": "^5.9.3",
+    "vite": "^8.3.0"
+  },
+  "engines": {
+    "node": ">=22.12.0"
+  }
+}

@@ -1,0 +1,5 @@
+{
+  "_comment": "Положи mp3/ogg в public/audio/tracks/ и перечисли их здесь. Пути начинаются с /audio/tracks/. finale — трек, который включается на рассвете после победы над Ваисовым.",
+  "tracks": [],
+  "finale": null
+}

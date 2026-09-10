@@ -1,0 +1,31 @@
+# deps
+node_modules/
+
+# build
+dist/
+dist-ssr/
+*.local
+
+# editors / os
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Личные медиа-файлы (музыка, мемы, ролики) — кладём локально, в git не тащим.
+# Если хочешь закоммитить конкретные файлы, убери нужные строки ниже.
+public/audio/tracks/*
+!public/audio/tracks/.gitkeep
+public/media/billboards/*
+!public/media/billboards/.gitkeep
