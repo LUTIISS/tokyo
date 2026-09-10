@@ -1,7 +1,7 @@
 import { ECONOMY } from '@/config';
 
 /**
- * Интерфейс квеста. Сейчас есть только заглушка на смотровой площадке,
+ * Интерфейс квеста. Сейчас на смотровой площадке вручают подарок,
  * но сюда можно подключить что угодно: доставку, гонку на время, сбор предметов.
  */
 export interface Quest {
@@ -15,18 +15,18 @@ export interface Quest {
   readonly done: boolean;
   /** Запуск. Для мгновенных квестов может сразу выставить done. */
   start(): void;
-  /** Обновление во время активного квеста (пока не используется заглушкой). */
+  /** Обновление во время активного квеста (мгновенным не нужно). */
   update(dt: number): void;
   /** Текст прогресса для HUD. */
   progressText(): string;
 }
 
 /**
- * Квест-заглушка: место зарезервировано, награда начисляется сразу.
- * Заменить на настоящий квест — реализовать Quest и подставить в Game.
+ * Подарок на смотровой: доехал — получил иены на тюнинг, сразу и без условий.
+ * Чтобы сделать здесь настоящее испытание, реализуй Quest и подставь в Game.
  */
-export class PlaceholderQuest implements Quest {
-  readonly id = 'overlook-placeholder';
+export class OverlookGiftQuest implements Quest {
+  readonly id = 'overlook-gift';
   readonly title = 'Поздравление на смотровой';
   readonly kicker = '展望台 · ПОДАРОК';
   readonly reward = ECONOMY.questReward;
@@ -45,7 +45,7 @@ export class PlaceholderQuest implements Quest {
   }
 
   update(): void {
-    /* заглушка */
+    // Подарок вручается сразу, следить не за чем.
   }
 
   progressText(): string {

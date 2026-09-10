@@ -21,7 +21,7 @@ import { Overlays } from '@/ui/Overlays';
 import { MiniMap } from '@/ui/MiniMap';
 import { ObjectiveMarker } from '@/ui/ObjectiveMarker';
 import { TurnIndicator } from '@/ui/TurnIndicator';
-import { PlaceholderQuest, type Quest } from '@/quests/Quest';
+import { OverlookGiftQuest, type Quest } from '@/quests/Quest';
 import type { Sector } from '@/world/Track';
 import type { ZoneId } from '@/world/Zones';
 
@@ -68,7 +68,7 @@ export class Game {
   private minimap!: MiniMap;
   private marker!: ObjectiveMarker;
   private turns!: TurnIndicator;
-  private quest: Quest = new PlaceholderQuest();
+  private quest: Quest = new OverlookGiftQuest();
 
   private mode: Mode = 'loading';
   private modeBeforePause: Mode = 'walk';
@@ -539,7 +539,7 @@ export class Game {
       onClose: () => this.setMode('drive'),
       actions: [
         {
-          label: 'Выполнить (заглушка)',
+          label: 'Принять подарок',
           primary: true,
           onClick: () => {
             q.start();

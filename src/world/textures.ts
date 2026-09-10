@@ -124,8 +124,8 @@ export function makeNeonSignTexture(text: string, color: string, vertical: boole
   return tex;
 }
 
-/** Заглушка для стенда: «сюда мем». */
-export function makeBillboardPlaceholder(n: number): THREE.CanvasTexture {
+/** Поздравление на широком экране, пока не подложили свои мемы. */
+export function makeBillboardGreeting(n: number): THREE.CanvasTexture {
   const w = 768;
   const h = 432;
   const c = document.createElement('canvas');

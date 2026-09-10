@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import type { Track } from './Track';
 import type { Terrain } from './Terrain';
 import type { FacadeSlot } from './City';
-import { makeBillboardPlaceholder } from './textures';
+import { makeBillboardGreeting } from './textures';
 import { mulberry32, lerp } from './noise';
 import { assetUrl } from '@/core/paths';
 
@@ -14,7 +14,7 @@ import { assetUrl } from '@/core/paths';
  *     { "type": "video", "src": "/media/billboards/clip1.mp4" }
  *   ]
  * }
- * Если файла нет или список пуст — на стендах будут заглушки «сюда мем».
+ * Если файла нет или список пуст — на стендах рисуется поздравление.
  */
 export interface BillboardItem {
   type: 'image' | 'video';
@@ -109,7 +109,7 @@ export class Billboards {
     const screenMat = new THREE.MeshStandardMaterial({
       color: 0x000000,
       emissive: new THREE.Color(0xffffff),
-      emissiveMap: makeBillboardPlaceholder(index),
+      emissiveMap: makeBillboardGreeting(index),
       emissiveIntensity: 1.0,
       roughness: 0.4,
     });
