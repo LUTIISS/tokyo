@@ -12,15 +12,32 @@ import { makeNeonEnvironment } from '@/world/EnvMap';
 import { Car } from '@/entities/Car';
 import type { CarInput } from '@/entities/CarPhysics';
 import { Player } from '@/entities/Player';
+import { Boss } from '@/entities/Boss';
 import { CameraRig } from '@/camera/CameraRig';
 import { AudioManager } from '@/audio/AudioManager';
 import { HUD } from '@/ui/HUD';
 import { GarageMenu } from '@/ui/GarageMenu';
 import { Overlays } from '@/ui/Overlays';
+import { MiniMap } from '@/ui/MiniMap';
+import { ObjectiveMarker } from '@/ui/ObjectiveMarker';
+import { TurnIndicator } from '@/ui/TurnIndicator';
 import { PlaceholderQuest, type Quest } from '@/quests/Quest';
 import type { Sector } from '@/world/Track';
+import type { ZoneId } from '@/world/Zones';
 
-type Mode = 'loading' | 'intro' | 'walk' | 'entering' | 'drive' | 'exiting' | 'garage' | 'quest' | 'boss' | 'finale' | 'paused';
+type Mode =
+  | 'loading'
+  | 'intro'
+  | 'walk'
+  | 'entering'
+  | 'drive'
+  | 'exiting'
+  | 'garage'
+  | 'quest'
+  | 'boss'
+  | 'bossfight'
+  | 'finale'
+  | 'paused';
 
 interface Timer {
   at: number;
@@ -44,9 +61,13 @@ export class Game {
   private world!: World;
   private car!: Car;
   private player!: Player;
+  private boss = new Boss();
   private hud!: HUD;
   private overlays!: Overlays;
   private garage!: GarageMenu;
+  private minimap!: MiniMap;
+  private marker!: ObjectiveMarker;
+  private turns!: TurnIndicator;
   private quest: Quest = new PlaceholderQuest();
 
   private mode: Mode = 'loading';
@@ -57,6 +78,7 @@ export class Game {
   private lastSector: Sector | null = null;
   private dayTarget = 0;
   private gateWarnAt = -10;
+  private lastClank = 0;
   private prevImpact = 0;
   private focus = new THREE.Vector3();
   private tmpV = new THREE.Vector3();
@@ -109,6 +131,13 @@ export class Game {
     this.world = new World(this.scene);
     await this.world.build((msg) => this.overlays.setIntroStatus(msg));
 
+    // ── Карта и маркер цели ──
+    this.minimap = new MiniMap(this.hud.root, this.ui, this.world.track, this.world.plan);
+    this.hud.mountBottomLeft(this.minimap.root);
+    this.hud.setHelpVisible(false);
+    this.marker = new ObjectiveMarker(this.hud.root);
+    this.turns = new TurnIndicator(this.hud.root, this.world.track);
+
     const envMap = makeNeonEnvironment(this.renderer);
     const water = this.scene.getObjectByName('water') as THREE.Mesh | null;
     if (water) {
@@ -131,6 +160,7 @@ export class Game {
 
     this.player = new Player();
     this.scene.add(this.player.group);
+    this.scene.add(this.boss.group);
     const px = start.x - start.nx * 8.6 - start.tx * 3;
     const pz = start.z - start.nz * 8.6 - start.tz * 3;
     this.player.placeAt(px, pz, Math.atan2(-(cx - px), -(cz - pz)), this.world.groundHeight(px, pz));
@@ -172,7 +202,7 @@ export class Game {
     this.hud.setVisible(true);
     this.setMode('walk');
     this.cameraRig.setMode('walk');
-    this.hud.toast('Подойди к машине и нажми <kbd>E</kbd>', 'info', 4000);
+    this.hud.toast('Подойди к машине и нажми <kbd>E</kbd> · <kbd>Tab</kbd> — карта · <kbd>H</kbd> — управление', 'info', 5000);
     const loc = this.world.locationAt(this.player.x, this.player.z);
     this.lastSector = loc.key;
     this.hud.showLocation(loc.jp, loc.ru);
@@ -185,6 +215,15 @@ export class Game {
 
   private after(seconds: number, fn: () => void): void {
     this.timers.push({ at: this.time + seconds, fn });
+  }
+
+  /** Текущая цель по сюжету. */
+  private objectiveId(): ZoneId | null {
+    const d = this.state.data;
+    if (!d.questDone) return 'quest';
+    if (!d.upgrades.bigUpgrade) return 'garage';
+    if (!d.bossDefeated) return 'boss';
+    return null;
   }
 
   private refreshStateUI(): void {
@@ -200,6 +239,7 @@ export class Game {
       done = true;
     }
     this.hud.setQuestLine(line, done);
+    this.minimap?.setObjective(this.objectiveId());
   }
 
   // ─────────────────────────────────────────────────────────────────────
@@ -243,10 +283,15 @@ export class Game {
       case 'finale':
         this.updateDrive(dt);
         break;
+      case 'bossfight':
+        this.updateBossFight(dt);
+        break;
       case 'garage':
       case 'quest':
       case 'boss':
         this.car.update(dt, null, this.world, this.time);
+        break;
+      case 'loading':
         break;
       case 'paused':
         break;
@@ -257,6 +302,11 @@ export class Game {
       const d = this.dayTarget > this.world.dayness ? Math.min(this.dayTarget, this.world.dayness + dt / 28) : Math.max(this.dayTarget, this.world.dayness - dt / 28);
       this.world.setDayness(d);
       this.world.props.setBlossom(d);
+    }
+
+    // Босс живёт своей жизнью, пока идёт бой
+    if (this.mode === 'bossfight' || this.boss.group.visible) {
+      this.boss.update(dt, this.car.physics.x, this.car.physics.z, (x, z) => this.world.groundHeight(x, z));
     }
 
     // Фокус мира — машина или персонаж
@@ -283,13 +333,53 @@ export class Game {
       groundHeight: (x, z) => this.world.groundHeight(x, z),
     });
 
+    // Карта и маркер цели
+    if (this.mode !== 'intro' && this.mode !== 'paused') {
+      this.minimap.update(dt, {
+        x: this.focus.x,
+        z: this.focus.z,
+        heading: driving ? ph.heading : this.player.heading,
+        driving,
+        carX: ph.x,
+        carZ: ph.z,
+        carHeading: ph.heading,
+      });
+      const poi = this.minimap.objectivePoi();
+      const overlayMode =
+        this.mode === 'garage' || this.mode === 'quest' || this.mode === 'boss' || this.mode === 'bossfight';
+      if (poi && !overlayMode) {
+        this.cameraRig.camera.updateMatrixWorld();
+        this.tmpV.set(poi.x, this.world.groundHeight(poi.x, poi.z) + 7, poi.z);
+        this.marker.update(this.cameraRig.camera, this.tmpV, poi.glyph, poi.color, this.minimap.distanceText(), window.innerWidth, window.innerHeight);
+      } else {
+        this.marker.hide();
+      }
+
+      // Стрелка следующего поворота — только за рулём и на ходу
+      const drivingFast = driving && Math.abs(ph.speed) > 3;
+      if (drivingFast && !overlayMode) {
+        const near = this.world.track.nearest(ph.x, ph.z);
+        const forward = ph.forwardX * near.sample.tx + ph.forwardZ * near.sample.tz >= 0;
+        this.turns.update(this.turns.lookAhead(ph.x, ph.z, forward), true);
+      } else {
+        this.turns.update({ kind: 'straight', distance: 0, severity: 0 }, false);
+      }
+    }
+
     // Звук
-    const engineOn = this.car.engineOn && (this.mode === 'drive' || this.mode === 'finale');
+    const engineOn = this.car.engineOn && (this.mode === 'drive' || this.mode === 'finale' || this.mode === 'bossfight');
     this.audio.setEngine(ph.rpm, engineOn ? this.input.throttle : 0, this.car.engineOn);
     const screech = engineOn ? Math.min(1, Math.max(Math.abs(ph.slip) / 0.45, this.input.handbrake && Math.abs(ph.speed) > 3 ? 0.7 : 0)) * Math.min(1, Math.abs(ph.speed) / 6) : 0;
     this.audio.setScreech(screech);
     this.audio.update(dt);
     this.hud.update(dt);
+
+    // Стук флюгегехаймена
+    const fl = this.car.fluegel;
+    if (fl.installed && fl.active && fl.stroke > 0.9 && this.time - this.lastClank > 0.1) {
+      this.lastClank = this.time;
+      this.audio.sfx('clank');
+    }
 
     // Локация
     if (this.mode === 'walk' || this.mode === 'drive' || this.mode === 'finale') {
@@ -304,10 +394,15 @@ export class Game {
   private handleGlobalKeys(): void {
     if (this.mode === 'intro' || this.mode === 'loading') return;
     if (this.input.justPressedRaw('Escape')) {
-      if (this.mode === 'garage') this.garage.close();
+      if (this.minimap.isBigOpen) this.minimap.toggleBig(false);
+      else if (this.mode === 'garage') this.garage.close();
       else if (this.mode === 'paused') this.resume();
       else if (this.mode === 'walk' || this.mode === 'drive' || this.mode === 'finale') this.pause();
       return;
+    }
+    if (this.input.justPressedRaw('Tab') && (this.mode === 'walk' || this.mode === 'drive' || this.mode === 'finale' || this.mode === 'bossfight')) {
+      this.minimap.toggleBig();
+      this.audio.sfx('ui');
     }
     if (this.input.justPressed('KeyH')) this.hud.toggleHelp();
     if (this.input.justPressed('KeyN')) this.audio.next();
@@ -425,11 +520,11 @@ export class Game {
       if (slow && this.input.interact) this.openGarage();
     } else if (zone?.id === 'boss' && !this.state.data.bossDefeated) {
       if (this.state.upgrades.bigUpgrade) {
-        prompt = slow ? 'Штурмовать базу Ваисова' : 'Остановись перед воротами';
+        prompt = slow ? 'Победить Ваисова' : 'Остановись перед воротами';
         if (slow && this.input.interact) this.startBoss();
       } else if (this.time - this.gateWarnAt > 6) {
         this.gateWarnAt = this.time;
-        this.hud.toast('Ворота заперты. Нужен <b>большой апгрейд</b> из мастерской.', 'warn', 3500);
+        this.hud.toast('Ворота заперты. Нужен <b>флюгегехаймен</b> из мастерской.', 'warn', 3500);
       }
     } else if (slow && Math.abs(ph.speed) < 1.5) {
       prompt = 'Выйти из машины';
@@ -512,6 +607,7 @@ export class Game {
   }
 
   // ── Босс ──
+  /** Короткая кат-сцена: ворота сносим флюгегехайменом, во двор выходит Ваисов. */
   private startBoss(): void {
     this.setMode('boss');
     this.hud.setPrompt(null);
@@ -520,29 +616,125 @@ export class Game {
     const f = this.world.zones.bossFocus();
     const carPos = this.car.position.clone();
     const up = new THREE.Vector3(0, 1, 0);
-    // Камера стоит на дороге сбоку от машины, потом поднимается над воротами и смотрит во двор
     const from = carPos.clone().addScaledVector(f.along, 9).addScaledVector(f.inward, -5).addScaledVector(up, 2.5);
     const to = f.gate.clone().addScaledVector(f.inward, -9).addScaledVector(f.along, 4).addScaledVector(up, 7);
     this.cameraRig.cinematic(from, to, carPos.clone().addScaledVector(up, 1), f.gate, 4);
     this.overlays.subtitle('Кто посмел приехать на моём районе с такой подсветкой?!', 'ВАИСОВ');
 
-    this.after(2.2, () => {
+    this.after(2.4, () => {
       this.audio.sfx('gate');
       this.world.zones.openGate();
       this.cameraRig.shake(1);
-      this.overlays.subtitle('Mark II сносит ворота. Место для настоящего босс-файта — здесь.', 'ТАРАН');
+      this.overlays.subtitle('Флюгегехаймен сносит ворота.', 'ФЛЮГЕГЕХАЙМЕН');
     });
-    this.after(5.0, () => {
-      const overCage = f.cage.clone().addScaledVector(f.inward, -12).addScaledVector(f.along, 6).addScaledVector(up, 6);
-      this.cameraRig.cinematic(to, overCage, f.gate, f.cage, 4);
-      this.overlays.subtitle('Ладно, ладно! Забирай их и вали отсюда!', 'ВАИСОВ');
+    this.after(4.6, () => {
+      // Ваисов выходит в центр двора
+      const yard = f.yard;
+      const heading = Math.atan2(-(carPos.x - yard.x), -(carPos.z - yard.z));
+      this.boss.spawn(yard.x, yard.z, this.world.groundHeight(yard.x, yard.z), heading);
+      const camPos = yard.clone().addScaledVector(f.inward, -16).addScaledVector(f.along, 10).addScaledVector(up, 6);
+      this.cameraRig.cinematic(to, camPos, f.gate, yard.clone().setY(yard.y + 2), 3.4);
+      this.overlays.subtitle('Ну давай, посмотрим, что у тебя там из капота торчит.', 'ВАИСОВ');
     });
-    this.after(8.0, () => {
+    this.after(8.0, () => this.beginBossFight());
+  }
+
+  /** Сам бой: заезжаешь во двор и долбишь Ваисова флюгегехайменом на Shift. */
+  private beginBossFight(): void {
+    this.overlays.subtitle(null);
+    this.overlays.cutsceneBars(false);
+    this.cameraRig.setMode('chase');
+    this.setMode('bossfight');
+    this.hud.setBoss(true, this.boss.hp, this.boss.maxHp, 'Разгонись и держи <kbd>Shift</kbd> — флюгегехаймен достанет его');
+    this.hud.toast('Таранить только флюгегехайменом. <kbd>Shift</kbd>!', 'warn', 4000);
+  }
+
+  private updateBossFight(dt: number): void {
+    const inp: CarInput = {
+      throttle: this.input.throttle,
+      brake: this.input.brake,
+      steer: this.input.steer,
+      handbrake: this.input.handbrake,
+      nitro: this.input.run,
+    };
+    this.car.update(dt, inp, this.world, this.time);
+    const ph = this.car.physics;
+
+    if (this.input.justPressed('KeyC')) this.cameraRig.nextChaseVariant();
+    this.hud.setSpeed(ph.speedKmh, ph.gear, ph.rpm, ph.speed < -0.5);
+    this.hud.setNitro(this.car.params.nitro ? ph.nitroCharge : null);
+    this.hud.setDrift(ph.drifting, ph.driftScore, ph.driftCombo);
+
+    if (!this.boss.group.visible || this.boss.phase === 'defeated') return;
+
+    // Ваисов «просыпается» и начинает бегать, как только машина тронулась
+    if (this.boss.phase === 'taunt' && ph.speedKmh > 12) this.boss.phase = 'fight';
+
+    const dx = this.boss.x - ph.x;
+    const dz = this.boss.z - ph.z;
+    const dist = Math.hypot(dx, dz);
+    const fl = this.car.fluegel;
+
+    // Попадание: шток выброшен до упора и достаёт до тела
+    if (fl.installed && fl.active && dist < fl.maxReach + this.boss.radius + 1.2 && fl.consumeStrike()) {
+      // Кончик должен смотреть примерно в него
+      const aim = (ph.forwardX * dx + ph.forwardZ * dz) / (dist || 1);
+      if (aim > 0.45 && this.boss.takeHit(ph.x, ph.z, 1 + Math.min(1, ph.speedKmh / 90))) {
+        this.audio.sfx('hit');
+        this.cameraRig.shake(0.9);
+        this.hud.setBoss(true, this.boss.hp, this.boss.maxHp, this.boss.hp > 0 ? `Осталось ударов: <b>${this.boss.hp}</b>` : 'Ваисов повержен');
+        const tip = fl.tipWorld(this.tmpV);
+        for (let i = 0; i < 8; i++) {
+          this.car.smoke.emit(tip.x, tip.y, tip.z, (Math.random() - 0.5) * 6, (Math.random() - 0.5) * 6, 1.6, 0.8);
+        }
+        if (this.boss.hp === 0) this.onBossDefeated();
+      }
+    }
+
+    // Об Ваисова просто так не проехать — отталкивает машину
+    const solid = this.boss.radius + 1.3;
+    if (dist < solid && dist > 0.001) {
+      const nx = dx / dist;
+      const nz = dz / dist;
+      const push = solid - dist;
+      ph.x -= nx * push;
+      ph.z -= nz * push;
+      const vn = ph.vx * nx + ph.vz * nz;
+      if (vn > 0) {
+        ph.vx -= nx * vn * 1.4;
+        ph.vz -= nz * vn * 1.4;
+        if (vn > 6) {
+          ph.impact = Math.min(1, vn / 14);
+          this.audio.sfx('hit');
+        }
+      }
+    }
+  }
+
+  private onBossDefeated(): void {
+    this.audio.sfx('fanfare');
+    this.hud.setBoss(true, 0, this.boss.maxHp, 'Ваисов повержен');
+    this.setMode('boss');
+    this.overlays.cutsceneBars(true);
+    const f = this.world.zones.bossFocus();
+    const up = new THREE.Vector3(0, 1, 0);
+    const bossPos = new THREE.Vector3(this.boss.x, this.boss.y + 1, this.boss.z);
+    const cam = bossPos.clone().addScaledVector(f.inward, -13).addScaledVector(f.along, 9).addScaledVector(up, 8);
+    this.cameraRig.cinematic(this.cameraRig.camera.position.clone(), cam, bossPos, bossPos, 2.6);
+    this.overlays.subtitle('Всё, всё! Забирай их, только убери эту штуку!', 'ВАИСОВ');
+
+    this.after(3.2, () => {
       this.world.zones.captureBase();
-      this.audio.sfx('fanfare');
-      this.overlays.subtitle('Аниме-девочки свободны!', 'ПОБЕДА');
+      this.audio.sfx('gate');
+      this.overlays.subtitle('Клетка открыта. Аниме-девочки свободны!', 'ПОБЕДА');
+      const overCage = f.cage.clone().addScaledVector(f.inward, -12).addScaledVector(f.along, 6).addScaledVector(up, 6);
+      this.cameraRig.cinematic(cam, overCage, bossPos, f.cage, 3.4);
     });
-    this.after(11.0, () => this.startFinale());
+    this.after(6.6, () => {
+      this.hud.setBoss(false);
+      this.boss.hide();
+      this.startFinale();
+    });
   }
 
   private startFinale(): void {

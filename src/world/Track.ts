@@ -263,15 +263,21 @@ export class Track {
     geo.setAttribute('normal', new THREE.BufferAttribute(normals, 3));
     geo.setIndex(indices);
 
-    const tex = makeRoadTexture();
+    const tex = makeRoadTexture(false);
+    const glow = makeRoadTexture(true);
     const mat = new THREE.MeshStandardMaterial({
       map: tex,
+      // Разметка и края слегка светятся — ночью дорога читается даже без фонаря.
+      emissiveMap: glow,
+      emissive: new THREE.Color(0xffffff),
+      emissiveIntensity: 0.85,
       roughness: 0.82,
       metalness: 0.05,
       polygonOffset: true,
       polygonOffsetFactor: -1,
       polygonOffsetUnits: -1,
     });
+    mat.name = 'road-mat';
     const mesh = new THREE.Mesh(geo, mat);
     mesh.name = 'road';
     return mesh;
@@ -565,8 +571,11 @@ export function mergeGeometries(geoms: THREE.BufferGeometry[]): THREE.BufferGeom
   return out;
 }
 
-/** Текстура асфальта с разметкой: бордюр | линия | полоса | пунктир | полоса | линия | бордюр. */
-function makeRoadTexture(): THREE.CanvasTexture {
+/**
+ * Текстура асфальта с разметкой: обочина | краевая линия | полоса | пунктир | полоса | линия | обочина.
+ * emissive=true — та же разметка на чёрном фоне, для свечения ночью.
+ */
+function makeRoadTexture(emissive: boolean): THREE.CanvasTexture {
   const w = 512;
   const h = 512;
   const c = document.createElement('canvas');
@@ -574,35 +583,55 @@ function makeRoadTexture(): THREE.CanvasTexture {
   c.height = h;
   const ctx = c.getContext('2d')!;
 
-  // Асфальт
-  ctx.fillStyle = '#2b2b30';
-  ctx.fillRect(0, 0, w, h);
-  const img = ctx.getImageData(0, 0, w, h);
-  const d = img.data;
-  for (let i = 0; i < d.length; i += 4) {
-    const nse = (Math.random() - 0.5) * 22;
-    d[i] = clamp(d[i] + nse, 0, 255);
-    d[i + 1] = clamp(d[i + 1] + nse, 0, 255);
-    d[i + 2] = clamp(d[i + 2] + nse + 2, 0, 255);
+  if (emissive) {
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(0, 0, w, h);
+  } else {
+    // Асфальт с зерном
+    ctx.fillStyle = '#2b2b30';
+    ctx.fillRect(0, 0, w, h);
+    const img = ctx.getImageData(0, 0, w, h);
+    const d = img.data;
+    for (let i = 0; i < d.length; i += 4) {
+      const nse = (Math.random() - 0.5) * 22;
+      d[i] = clamp(d[i] + nse, 0, 255);
+      d[i + 1] = clamp(d[i + 1] + nse, 0, 255);
+      d[i + 2] = clamp(d[i + 2] + nse + 2, 0, 255);
+    }
+    ctx.putImageData(img, 0, 0);
   }
-  ctx.putImageData(img, 0, 0);
 
-  // Обочина (края текстуры) чуть светлее
-  const shoulder = Math.round((w * 0.9) / (ROAD.width + 1.8) * 0.5);
-  ctx.fillStyle = '#3a3a40';
-  ctx.fillRect(0, 0, shoulder, h);
-  ctx.fillRect(w - shoulder, 0, shoulder, h);
+  const shoulder = Math.round(((w * 0.9) / (ROAD.width + 1.8)) * 0.5);
+  if (!emissive) {
+    ctx.fillStyle = '#3a3a40';
+    ctx.fillRect(0, 0, shoulder, h);
+    ctx.fillRect(w - shoulder, 0, shoulder, h);
+  }
 
-  // Краевые линии (сплошные белые)
+  // Краевые линии
   const lineW = Math.round(w * 0.012);
-  ctx.fillStyle = '#e8e8e0';
+  ctx.fillStyle = emissive ? '#9fd8ff' : '#e8e8e0';
   ctx.fillRect(shoulder + 6, 0, lineW, h);
   ctx.fillRect(w - shoulder - 6 - lineW, 0, lineW, h);
 
   // Центральный пунктир
-  ctx.fillStyle = '#f0e6a0';
+  ctx.fillStyle = emissive ? '#ffd86b' : '#f0e6a0';
   const dashH = h * 0.32;
   ctx.fillRect(w / 2 - lineW / 2, h * 0.1, lineW, dashH);
+
+  if (emissive) {
+    // «Кошачьи глаза» вдоль краевых линий — точки, которые видно издалека.
+    ctx.fillStyle = '#ffffff';
+    const r = lineW * 1.6;
+    for (const cx of [shoulder + 6 + lineW / 2, w - shoulder - 6 - lineW / 2]) {
+      ctx.beginPath();
+      ctx.arc(cx, h * 0.25, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(cx, h * 0.75, r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
 
   const tex = new THREE.CanvasTexture(c);
   tex.wrapS = THREE.ClampToEdgeWrapping;

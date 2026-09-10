@@ -5,6 +5,9 @@ import type { Colliders } from './Colliders';
 import { mergeGeometries } from './Track';
 import { mulberry32, lerp } from './noise';
 
+/** Яркость одного уличного фонаря. */
+const LAMP_INTENSITY = 130;
+
 /**
  * Фонари, деревья сакуры, пул реальных источников света у ближайших фонарей,
  * и маленькие «строительные блоки» для зон (тории, фонарики, автоматы, контейнеры).
@@ -31,8 +34,8 @@ export class Props {
     this.buildLamps();
     this.buildTrees();
     // Пул точечных источников: подсвечивают дорогу под ближайшими фонарями.
-    for (let i = 0; i < 8; i++) {
-      const l = new THREE.PointLight(0xffd9a6, 0, 46, 1.6);
+    for (let i = 0; i < 14; i++) {
+      const l = new THREE.PointLight(0xffd9a6, 0, 60, 1.5);
       l.visible = false;
       this.group.add(l);
       this.lampPool.push(l);
@@ -50,9 +53,10 @@ export class Props {
     let side = 1;
     let last = -1000;
     for (const smp of this.track.samples) {
-      const lit = smp.sector === 'city' || smp.sector === 'industrial' || smp.sector === 'docks' || smp.sector === 'bridge';
-      if (!lit) continue;
-      if (smp.s - last < 30) continue;
+      // Фонари стоят вдоль всей трассы: в горах и на смотровой они реже, в городе — чаще.
+      const wild = smp.sector === 'touge' || smp.sector === 'overlook';
+      const gap = wild ? 34 : 22;
+      if (smp.s - last < gap) continue;
       last = smp.s;
       side = -side;
       const off = smp.sector === 'bridge' ? hw + 1.6 : hw + 0.9 + 0.7;
@@ -82,7 +86,7 @@ export class Props {
     this.lampHeadMat = new THREE.MeshStandardMaterial({
       color: 0xffffff,
       emissive: 0xffd9a6,
-      emissiveIntensity: 2.2,
+      emissiveIntensity: 3.2,
     });
     if (poleGeoms.length) {
       const poles = new THREE.Mesh(mergeGeometries(poleGeoms), poleMat);
@@ -179,8 +183,8 @@ export class Props {
 
   setDayness(t: number): void {
     this.dayness = t;
-    if (this.lampHeadMat) this.lampHeadMat.emissiveIntensity = lerp(0.15, 2.2, 1 - t);
-    for (const l of this.lampPool) l.intensity = l.visible ? lerp(0, 60, 1 - t) : 0;
+    if (this.lampHeadMat) this.lampHeadMat.emissiveIntensity = lerp(0.15, 3.2, 1 - t);
+    for (const l of this.lampPool) l.intensity = l.visible ? lerp(0, LAMP_INTENSITY, 1 - t) : 0;
     this.applyBlossom();
   }
 
@@ -205,7 +209,7 @@ export class Props {
     // Ближайшие N фонарей
     const near = this.lampPositions
       .map((p, i) => ({ i, d: p.distanceToSquared(focus) }))
-      .filter((e) => e.d < 150 * 150)
+      .filter((e) => e.d < 180 * 180)
       .sort((a, b) => a.d - b.d)
       .slice(0, this.lampPool.length);
     this.lampPool.forEach((l, k) => {
@@ -216,7 +220,7 @@ export class Props {
       }
       l.visible = true;
       l.position.copy(this.lampPositions[e.i]);
-      l.intensity = lerp(60, 0, this.dayness);
+      l.intensity = lerp(LAMP_INTENSITY, 0, this.dayness);
     });
   }
 }

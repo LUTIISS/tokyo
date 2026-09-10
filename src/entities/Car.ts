@@ -4,6 +4,7 @@ import type { Upgrades } from '@/core/GameState';
 import type { Colliders, OBB } from '@/world/Colliders';
 import { damp, lerp } from '@/world/noise';
 import { buildCarModel, type CarModel } from './CarModel';
+import { Fluegel } from './Fluegel';
 import { CarPhysics, baseParams, type CarInput, type CarParams, type GroundQuery, IDLE_INPUT } from './CarPhysics';
 import { Skidmarks, Smoke } from './Effects';
 
@@ -22,6 +23,7 @@ export class Car {
   readonly physics = new CarPhysics();
   readonly skid = new Skidmarks();
   readonly smoke = new Smoke();
+  readonly fluegel = new Fluegel();
   params: CarParams = baseParams();
 
   engineOn = false;
@@ -39,6 +41,7 @@ export class Car {
 
   constructor(scene: THREE.Scene, envMap: THREE.Texture | null) {
     this.model = buildCarModel(envMap);
+    this.fluegel.attachTo(this.model.root);
     scene.add(this.model.root, this.skid.mesh, this.smoke.points);
   }
 
@@ -126,6 +129,7 @@ export class Car {
     }
     this.params = p;
     this.model.spoiler.visible = u.spoiler;
+    this.fluegel.setInstalled(u.bigUpgrade);
     this.setNeon(NEON_COLORS[u.neon]?.hex ?? NEON_COLORS[0].hex);
   }
 
@@ -176,7 +180,7 @@ export class Car {
     const night = 1 - world.dayness;
     const lightsOn = this.engineOn;
     for (const hl of this.model.headlights) {
-      hl.intensity = lightsOn ? lerp(40, 150, night) : 0;
+      hl.intensity = lightsOn ? lerp(80, 340, night) : 0;
     }
     this.model.headlightMat.emissiveIntensity = lightsOn ? 3.2 : 0.15;
     const braking = inp.brake > 0 && ph.speed > 0.5;
@@ -201,6 +205,10 @@ export class Car {
       flame.scale.set(1, 0.6 + Math.random() * 0.8, 1);
     }
     this.prevThrottle = inp.throttle;
+
+    // ── Флюгегехаймен ──
+    // Боевой режим: шток выезжает из капота и очень быстро долбит вперёд-назад.
+    this.fluegel.update(dt, this.engineOn && inp.nitro);
 
     // ── Следы и дым ──
     const slipAmt = Math.min(1, Math.abs(ph.slip) / 0.5);

@@ -63,6 +63,7 @@ export class Overlays {
           <div><span>Сесть / действие</span><span><kbd>E</kbd></span></div>
           <div><span>Бег / нитро</span><span><kbd>Shift</kbd></span></div>
           <div><span>Камера</span><span><kbd>C</kbd></span></div>
+          <div><span>Карта</span><span><kbd>Tab</kbd></span></div>
           <div><span>Поставить на трассу</span><span><kbd>R</kbd></span></div>
           <div><span>Следующий трек / звук</span><span><kbd>N</kbd> <kbd>M</kbd></span></div>
           <div><span>Пауза / помощь</span><span><kbd>Esc</kbd> <kbd>H</kbd></span></div>

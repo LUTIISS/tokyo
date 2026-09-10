@@ -13,7 +13,7 @@ export class Input {
     target.addEventListener('keydown', (e) => {
       if (e.repeat) return;
       // Не даём странице скроллиться стрелками/пробелом.
-      if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.code)) {
+      if (['Space', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Tab'].includes(e.code)) {
         e.preventDefault();
       }
       this.down.add(e.code);

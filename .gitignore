@@ -29,6 +29,8 @@ public/audio/tracks/*
 !public/audio/tracks/.gitkeep
 public/media/billboards/*
 !public/media/billboards/.gitkeep
+public/media/posters/*
+!public/media/posters/.gitkeep
 
 # временные сборки
 dist-*/

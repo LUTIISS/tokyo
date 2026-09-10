@@ -90,9 +90,9 @@ const CATS: Cat[] = [
   {
     id: 'big',
     icon: '雷',
-    label: 'Большой апгрейд',
-    sub: 'Нитро «Kaminari»',
-    title: 'БОЛЬШОЙ АПГРЕЙД · 雷',
+    label: 'Флюгегехаймен',
+    sub: 'Главный апгрейд',
+    title: 'ФЛЮГЕГЕХАЙМЕН · 雷',
     desc: '',
     key: 'bigUpgrade',
     options: [],
@@ -180,17 +180,18 @@ export class GarageMenu {
       const questDone = this.state.data.questDone;
       options = `
         <div class="big-card">
-          <h4>⚡ Нитро-система «Kaminari» + таран</h4>
-          <p>Единственная вещь в этой мастерской, за которую берут иены. Закись азота, усиленный бампер и
-          прошивка «боевой режим». С ней Mark II снесёт ворота базы Ваисова, а <kbd>Shift</kbd> станет кнопкой нитро.</p>
+          <h4>⚡ ФЛЮГЕГЕХАЙМЕН</h4>
+          <p>Единственная вещь в этой мастерской, за которую берут иены. Чёрная продолговатая штука ставится
+          в капот: по кнопке <kbd>Shift</kbd> она выезжает наружу и начинает очень быстро долбить вперёд-назад.
+          Ей и сносят ворота базы, и достают самого Ваисова. В комплекте — закись азота, чтобы успеть разогнаться.</p>
           <div class="req">
             ${questDone ? '<span class="ok">✓ Квест на смотровой пройден</span>' : '<span class="no">✗ Сначала пройди квест на смотровой площадке</span>'}<br/>
             ${enough || owned ? `<span class="ok">✓ Иен достаточно (${formatYen(this.state.yen)})</span>` : `<span class="no">✗ Нужно ${formatYen(cost)}, есть ${formatYen(this.state.yen)}</span>`}
           </div>
           ${
             owned
-              ? '<button class="btn" disabled>Установлено ✓</button>'
-              : `<button class="btn primary" data-buy="big" ${enough ? '' : 'disabled'}>Купить за ${formatYen(cost)}</button>`
+              ? '<button class="btn" disabled>Флюгегехаймен установлен ✓</button>'
+              : `<button class="btn primary" data-buy="big" ${enough ? '' : 'disabled'}>Поставить за ${formatYen(cost)}</button>`
           }
         </div>`;
     } else {

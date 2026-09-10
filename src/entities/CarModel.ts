@@ -152,10 +152,10 @@ export function buildCarModel(envMap: THREE.Texture | null): CarModel {
     const hl = new THREE.Mesh(new THREE.BoxGeometry(0.46, 0.15, 0.08), headlightMat);
     hl.position.set(x, 0.7, -2.42);
     body.add(hl);
-    const spot = new THREE.SpotLight(0xf2f7ff, 150, 75, 0.5, 0.5, 2);
+    const spot = new THREE.SpotLight(0xf4f8ff, 340, 130, 0.62, 0.45, 1.6);
     spot.position.set(x, 0.72, -2.3);
     const target = new THREE.Object3D();
-    target.position.set(x * 1.4, -0.6, -28);
+    target.position.set(x * 1.8, -1.4, -34);
     root.add(target);
     spot.target = target;
     root.add(spot);

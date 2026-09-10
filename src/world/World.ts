@@ -7,9 +7,11 @@ import { Sky } from './Sky';
 import { City } from './City';
 import { Props } from './Props';
 import { Billboards } from './Billboards';
+import { Posters } from './Posters';
 import { Sakura } from './Sakura';
 import { Zones, planZones, type ZonePlan } from './Zones';
 import { Colliders } from './Colliders';
+import { lerp, smoothstep } from './noise';
 
 export interface LocationInfo {
   key: Sector;
@@ -37,6 +39,7 @@ export class World {
   readonly city: City;
   readonly props: Props;
   readonly billboards: Billboards;
+  readonly posters: Posters;
   readonly sakura: Sakura;
   readonly zones: Zones;
   readonly plan: ZonePlan;
@@ -54,6 +57,7 @@ export class World {
     this.city = new City(this.track, this.terrain, this.colliders, this.plan.exclusions);
     this.props = new Props(this.track, this.terrain, this.colliders);
     this.billboards = new Billboards(this.track, this.terrain);
+    this.posters = new Posters(this.track, this.terrain, this.colliders);
     this.sakura = new Sakura();
   }
 
@@ -84,6 +88,11 @@ export class World {
       this.scene.add(this.billboards.group);
       void this.billboards.loadManifest();
     });
+    await step('Клеим плакаты…', () => {
+      this.posters.build();
+      this.scene.add(this.posters.group);
+      void this.posters.loadManifest();
+    });
     await step('Смотровая, мастерская, база Ваисова…', () => {
       this.zones.build();
       this.scene.add(this.zones.group);
@@ -97,26 +106,50 @@ export class World {
   }
 
   /** Всё, что нужно физике машины о точке под ней. */
+  /**
+   * Высота и свойства покрытия под точкой.
+   *
+   * Порядок такой, чтобы нигде не было ступенек и провалов:
+   *  1. асфальт + обочина — ровно высота дороги;
+   *  2. тротуар в городе — на 16 см выше;
+   *  3. дальше — плавный переход к рельефу в полосе шириной blend;
+   *  4. под мостом и вообще везде — не ниже самого рельефа (в землю не проваливаемся).
+   */
   queryGround(x: number, z: number): GroundQuery {
     const near = this.track.nearest(x, z);
     const hw = this.track.halfWidth;
     const sector = near.sample.sector;
     const rails = sector === 'touge' || sector === 'bridge' || near.sample.bridge;
     const urban = sector === 'city' || sector === 'industrial' || sector === 'docks';
+
+    // Рельеф под точкой — нижняя граница для всего, кроме моста.
+    let terrainY = this.terrain.heightAt(x, z);
+    if (terrainY < WORLD.waterLevel) terrainY = WORLD.waterLevel;
+
+    const asphalt = hw + 0.9; // проезжая часть с обочиной
+    const sidewalk = asphalt + 2.6; // тротуар в городе
+    const blend = 4; // полоса плавного схода к рельефу
+    const d = near.dist;
+
     let y: number;
-    if (near.dist <= hw + 0.9 + ROAD.onRoadMargin) {
+    if (d <= asphalt) {
       y = near.y;
-    } else if (urban && near.dist <= hw + 0.9 + 2.6) {
+    } else if (urban && d <= sidewalk) {
       y = near.y + 0.16;
-    } else if (near.sample.bridge && near.dist < hw + 6) {
-      y = near.y; // на мосту за ограждение всё равно не выехать
     } else {
-      y = this.terrain.heightAt(x, z);
-      if (y < WORLD.waterLevel) y = WORLD.waterLevel;
+      const edge = urban ? sidewalk : asphalt;
+      const edgeY = urban ? near.y + 0.16 : near.y;
+      const t = smoothstep(edge, edge + blend, d);
+      y = lerp(edgeY, terrainY, t);
     }
+
+    // Мост висит над заливом: там рельеф ниже, прижимать к нему нельзя.
+    const onBridgeDeck = near.sample.bridge && d <= asphalt + 2.5;
+    if (!onBridgeDeck) y = Math.max(y, terrainY);
+
     return {
       y,
-      onRoad: near.dist <= hw + 0.6,
+      onRoad: d <= hw + ROAD.onRoadMargin,
       lateral: near.lateral,
       halfWidth: hw,
       rails,
@@ -139,6 +172,7 @@ export class World {
     this.city.setDayness(t);
     this.props.setDayness(t);
     this.billboards.setDayness(t);
+    this.posters.setDayness(t);
     this.zones.setDayness(t);
   }
 

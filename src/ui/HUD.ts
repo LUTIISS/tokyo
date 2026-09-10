@@ -26,6 +26,9 @@ export class HUD {
   private promptText: HTMLElement;
   private toasts: HTMLElement;
   private help: HTMLElement;
+  private bossBar: HTMLElement;
+  private bossFill: HTMLElement;
+  private bossHint: HTMLElement;
   private location: HTMLElement;
   private locationJp: HTMLElement;
   private locationRu: HTMLElement;
@@ -73,6 +76,11 @@ export class HUD {
         <div class="drift-score">0</div>
         <div class="drift-combo">×1.0</div>
       </div>
+      <div class="bossbar hidden">
+        <div class="boss-name">ВАИСОВ<small>拠点のボス</small></div>
+        <div class="boss-track"><i></i></div>
+        <div class="boss-hint"></div>
+      </div>
       <div class="prompt panel"><kbd>E</kbd><span class="prompt-text"></span></div>
       <div class="toasts"></div>
       <div class="location"><div class="jp"></div><div class="ru"></div></div>
@@ -98,6 +106,9 @@ export class HUD {
     this.promptText = q('.prompt-text');
     this.toasts = q('.toasts');
     this.help = q('.help-panel');
+    this.bossBar = q('.bossbar');
+    this.bossFill = q('.boss-track > i');
+    this.bossHint = q('.boss-hint');
     this.location = q('.location');
     this.locationJp = q('.location .jp');
     this.locationRu = q('.location .ru');
@@ -105,6 +116,24 @@ export class HUD {
 
   setVisible(v: boolean): void {
     this.root.classList.toggle('visible', v);
+  }
+
+  /** Вставить элемент в левый нижний угол (мини-карта — над подсказками). */
+  mountBottomLeft(el: HTMLElement): void {
+    const corner = this.root.querySelector('.hud-corner.bl') as HTMLElement;
+    corner.insertBefore(el, corner.firstChild);
+  }
+
+  setHelpVisible(v: boolean): void {
+    this.help.classList.toggle('hidden', !v);
+  }
+
+  /** Полоса здоровья босса. hp/max в долях; hint — подсказка под полосой. */
+  setBoss(visible: boolean, hp = 1, max = 1, hint = ''): void {
+    this.bossBar.classList.toggle('hidden', !visible);
+    if (!visible) return;
+    this.bossFill.style.width = `${Math.max(0, (hp / max) * 100)}%`;
+    this.bossHint.innerHTML = hint;
   }
 
   setYen(n: number): void {

@@ -10,7 +10,7 @@ export interface Upgrades {
   neon: number;
   spoiler: boolean;
   /**
-   * Тот самый большой апгрейд за иены. Открывает штурм базы Ваисова.
+   * Флюгегехаймен — главный апгрейд за иены. Открывает штурм базы Ваисова.
    */
   bigUpgrade: boolean;
 }

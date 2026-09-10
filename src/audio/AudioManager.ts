@@ -28,6 +28,7 @@ export type SfxName =
   | 'hit'
   | 'nitro'
   | 'drift'
+  | 'clank'
   | 'fanfare';
 
 export class AudioManager {
@@ -313,6 +314,11 @@ export class AudioManager {
         break;
       case 'drift':
         tone('sine', 1320, 1760, 0.12, 0.07);
+        break;
+      case 'clank':
+        // Металлический стук флюгегехаймена
+        noise(0.05, 0.16, 'bandpass', 2600, 900);
+        tone('square', 180, 90, 0.06, 0.05);
         break;
       case 'fanfare':
         [523, 659, 784, 1046].forEach((f, i) => tone('triangle', f, f, 0.25, 0.12, i * 0.12));
