@@ -5,7 +5,10 @@
   "type": "module",
   "description": "Ночной Токио, белая Toyota Mark II, неон и дрифт. Браузерная 3D-игра в духе Slow Roads.",
   "scripts": {
+    "media": "node scripts/build-media-manifests.mjs",
+    "predev": "npm run media",
     "dev": "vite --host",
+    "prebuild": "npm run media",
     "build": "vite build",
     "preview": "vite preview --host",
     "typecheck": "tsc --noEmit"

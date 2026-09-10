@@ -23,14 +23,13 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 
-# Личные медиа-файлы (музыка, мемы, ролики) — кладём локально, в git не тащим.
-# Если хочешь закоммитить конкретные файлы, убери нужные строки ниже.
-public/audio/tracks/*
-!public/audio/tracks/.gitkeep
-public/media/billboards/*
-!public/media/billboards/.gitkeep
-public/media/posters/*
-!public/media/posters/.gitkeep
+# Медиа (музыка, мемы, плакаты) лежат в репозитории: просто кидай файлы в
+# public/audio/tracks/, public/media/billboards/ и public/media/posters/.
+# Манифесты собираются автоматически при npm run dev / build.
+# Не тащим только системный мусор и полуфабрикаты.
+public/**/*.psd
+public/**/*.ai
+public/**/.DS_Store
 
 # временные сборки
 dist-*/
