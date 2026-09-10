@@ -1,0 +1,38 @@
+{
+  "_comment": "Собирается автоматически из public/audio/tracks/. Файл с именем finale.* становится финальной темой. Не редактируй вручную — правь имена файлов.",
+  "tracks": [
+    {
+      "title": "А мой мальчик едет на девятке",
+      "src": "/audio/tracks/01 - А мой мальчик едет на девятке.mp3"
+    },
+    {
+      "title": "Серега — Черный Бумер",
+      "src": "/audio/tracks/02 - Серега - Черный Бумер.mp3"
+    },
+    {
+      "title": "Михаил Круг — Жиган-лимон",
+      "src": "/audio/tracks/03 - Михаил Круг - Жиган-лимон.mp3"
+    },
+    {
+      "title": "Любэ — Прорвемся, Опера",
+      "src": "/audio/tracks/04 - Любэ - Прорвемся, Опера.mp3"
+    },
+    {
+      "title": "SABI и MIA BOYKA — Базовый минимум",
+      "src": "/audio/tracks/05 - SABI и MIA BOYKA - Базовый минимум.mp3"
+    },
+    {
+      "title": "DVRST — Я уеду в Комарово",
+      "src": "/audio/tracks/06 - DVRST - Я уеду в Комарово.mp3"
+    },
+    {
+      "title": "Барбарики — Доброта",
+      "src": "/audio/tracks/07 - Барбарики - Доброта.mp3"
+    },
+    {
+      "title": "MC ORSEN — INCOMING",
+      "src": "/audio/tracks/08 - MC ORSEN - INCOMING.mp3"
+    }
+  ],
+  "finale": null
+}

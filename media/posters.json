@@ -1,0 +1,17 @@
+{
+  "_comment": "Собирается автоматически из public/media/posters/. Пусто — на щитах рисуются процедурные плакаты. Не редактируй вручную — правь имена файлов.",
+  "items": [
+    {
+      "src": "/media/posters/01 - Летящий в даль mAsSTep поздравляет тебя.png",
+      "label": "Летящий в даль mAsSTep поздравляет тебя"
+    },
+    {
+      "src": "/media/posters/02 - Протягиваю тебе много много здоровья.png",
+      "label": "Протягиваю тебе много много здоровья"
+    },
+    {
+      "src": "/media/posters/03 - Пусть deep dark fantasies будут so stunning.png",
+      "label": "Пусть deep dark fantasies будут so stunning"
+    }
+  ]
+}
