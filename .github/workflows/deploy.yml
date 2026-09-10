@@ -53,10 +53,15 @@ jobs:
           REPO: ${{ github.event.repository.name }}
         run: |
           url="https://${OWNER,,}.github.io/${REPO}/"
-          for i in 1 2 3 4 5 6; do
-            code=$(curl -s -o /dev/null -w '%{http_code}' "$url" || echo 000)
-            echo "Попытка $i: $url → HTTP $code"
-            [ "$code" = "200" ] && exit 0
+          for i in 1 2 3 4 5 6 7 8 9; do
+            body=$(curl -s -H 'Cache-Control: no-cache' "$url" || true)
+            code=$(curl -s -o /dev/null -w '%{http_code}' -H 'Cache-Control: no-cache' "$url" || echo 000)
+            title=$(printf '%s' "$body" | grep -o '<title>[^<]*</title>' | head -1)
+            echo "Попытка $i: $url → HTTP $code $title"
+            if [ "$code" = "200" ] && printf '%s' "$body" | grep -q "/${REPO}/assets/index-"; then
+              echo "Сайт отдаёт сборку игры."
+              exit 0
+            fi
             sleep 20
           done
-          echo "::warning::Сайт ещё не отвечает. Если Pages не включился сам: Settings → Pages → Source: Deploy from a branch → gh-pages / (root)."
+          echo "::warning::По адресу пока не сборка игры. Проверь Settings → Pages: Source «Deploy from a branch», ветка gh-pages, папка / (root)."
