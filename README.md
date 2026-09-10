@@ -19,6 +19,20 @@ npm run typecheck  # проверка типов
 
 Нужен Node 22+. Открывать лучше в Chrome / Edge (WebGL 2, bloom).
 
+## Деплой
+
+Игра выкладывается на GitHub Pages автоматически: workflow `.github/workflows/deploy.yml`
+собирает проект и публикует его при каждом пуше в `main` или в ветку `claude/**`.
+
+Адрес: **https://lutiiss.github.io/tokyo/**
+
+Если страница не открывается, один раз включи Pages в настройках репозитория:
+Settings → Pages → Build and deployment → Source: **GitHub Actions**. Потом перезапусти workflow
+(вкладка Actions → Deploy to GitHub Pages → Run workflow).
+
+Локальная сборка (`npm run build`) собирается для корня сайта; для подпапки задаётся переменная
+`BASE_PATH=/tokyo/` (workflow делает это сам).
+
 ## Управление
 
 | Клавиша | Действие |

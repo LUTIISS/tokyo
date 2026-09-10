@@ -4,6 +4,7 @@ import type { Terrain } from './Terrain';
 import type { FacadeSlot } from './City';
 import { makeBillboardPlaceholder } from './textures';
 import { mulberry32, lerp } from './noise';
+import { assetUrl } from '@/core/paths';
 
 /**
  * Манифест public/media/billboards.json:
@@ -132,7 +133,7 @@ export class Billboards {
   /** Загружает манифест и раздаёт медиа по экранам. */
   async loadManifest(url = '/media/billboards.json'): Promise<void> {
     try {
-      const res = await fetch(url, { cache: 'no-cache' });
+      const res = await fetch(assetUrl(url), { cache: 'no-cache' });
       if (!res.ok) return;
       const json = (await res.json()) as { items?: BillboardItem[] };
       this.items = (json.items ?? []).filter((i) => i && i.src);
@@ -145,7 +146,7 @@ export class Billboards {
       const item = this.items[i % this.items.length];
       if (item.type === 'video') {
         const v = document.createElement('video');
-        v.src = item.src;
+        v.src = assetUrl(item.src);
         v.muted = true;
         v.loop = true;
         v.playsInline = true;
@@ -158,7 +159,7 @@ export class Billboards {
         scr.video = v;
         if (this.started) v.play().catch(() => {});
       } else {
-        loader.load(item.src, (tex) => {
+        loader.load(assetUrl(item.src), (tex) => {
           tex.colorSpace = THREE.SRGBColorSpace;
           tex.anisotropy = 8;
           scr.mesh.material.emissiveMap = tex;

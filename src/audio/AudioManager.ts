@@ -1,4 +1,5 @@
 import { damp } from '@/world/noise';
+import { assetUrl } from '@/core/paths';
 
 /**
  * Манифест public/audio/tracks.json:
@@ -79,7 +80,7 @@ export class AudioManager {
 
   async loadManifest(url = '/audio/tracks.json'): Promise<void> {
     try {
-      const res = await fetch(url, { cache: 'no-cache' });
+      const res = await fetch(assetUrl(url), { cache: 'no-cache' });
       if (res.ok) {
         const json = (await res.json()) as { tracks?: TrackInfo[]; finale?: TrackInfo };
         this.playlist = (json.tracks ?? []).filter((t) => t && t.src);
@@ -116,7 +117,7 @@ export class AudioManager {
     this.finaleMode = false;
     this.index = ((i % this.playlist.length) + this.playlist.length) % this.playlist.length;
     const t = this.playlist[this.index];
-    this.music.src = t.src;
+    this.music.src = assetUrl(t.src);
     this.music.loop = false;
     this.music.play().catch(() => {});
     this.onTrackChange?.(t, false);
@@ -135,7 +136,7 @@ export class AudioManager {
   playFinale(): void {
     if (!this.finale) return;
     this.finaleMode = true;
-    this.music.src = this.finale.src;
+    this.music.src = assetUrl(this.finale.src);
     this.music.loop = true;
     this.music.play().catch(() => {});
     this.onTrackChange?.(this.finale, true);
