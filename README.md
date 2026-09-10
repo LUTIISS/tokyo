@@ -22,13 +22,13 @@ npm run typecheck  # проверка типов
 ## Деплой
 
 Игра выкладывается на GitHub Pages автоматически: workflow `.github/workflows/deploy.yml`
-собирает проект и публикует его при каждом пуше в `main` или в ветку `claude/**`.
+собирает проект при каждом пуше в `main` или в ветку `claude/**` и кладёт сборку в ветку `gh-pages`.
 
 Адрес: **https://lutiiss.github.io/tokyo/**
 
 Если страница не открывается, один раз включи Pages в настройках репозитория:
-Settings → Pages → Build and deployment → Source: **GitHub Actions**. Потом перезапусти workflow
-(вкладка Actions → Deploy to GitHub Pages → Run workflow).
+Settings → Pages → Build and deployment → Source: **Deploy from a branch** → ветка **gh-pages**, папка `/ (root)`.
+Через минуту после этого адрес заработает; дальше всё обновляется само.
 
 Локальная сборка (`npm run build`) собирается для корня сайта; для подпапки задаётся переменная
 `BASE_PATH=/tokyo/` (workflow делает это сам).
